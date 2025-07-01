@@ -255,12 +255,54 @@ authService.getAll = async (request) => {
                 from: "links",
                 localField: "_id",
                 foreignField: "userId",
-                as: "links",
+                as: "social",
                 pipeline:[
                     {
                         $match:{
                             status:'active',
-                            is_deleted:'0'
+                            is_deleted:'0',
+                            type:'social'
+                        }
+                    },
+                    {
+                        $addFields: {
+                            sort_index: {
+                                $ifNull: ["$is_index", 999999]
+                            }
+                        }
+                    },
+                    {
+                        $sort: {
+                            sort_index: 1 ,
+                             type: -1,
+                        }
+                    },
+                    {
+                        $project:{
+                            _id:1,
+                            linkTitle:1,
+                            linkUrl:1,
+                            linkLogo:1,
+                            type:1,
+                            status:1,
+                            is_index:1
+                        }
+                    }
+                ]
+            }
+        },
+       {
+            $lookup: {
+                from: "links",
+                localField: "_id",
+                foreignField: "userId",
+                as: "non_social",
+                pipeline:[
+                    {
+                        $match:{
+                            status:'active',
+                            is_deleted:'0',
+                            type:'non_social'
                         }
                     },
                     {
@@ -298,7 +340,8 @@ authService.getAll = async (request) => {
                 bio:1,
                 profile_img:1,
                 banner_img:1,
-                links:1,
+                social:1,
+                non_social:1,
                 
             }
         }
