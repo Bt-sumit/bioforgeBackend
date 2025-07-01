@@ -28,7 +28,7 @@ class addLinksValidation {
                 }),
             type: Joi.string()
                 .valid("social", "non_social")
-                .optional()
+                .required()
                 .messages({
                     "any.only": 'Type must be either "social" or "non_social"',
                 }),
@@ -66,7 +66,7 @@ class addLinksValidation {
             }),
             type: Joi.string()
             .valid("social", "non_social")
-            .optional()
+            .required()
             .messages({
                 "any.only": 'Type must be either "social" or "non_social"',
             }),

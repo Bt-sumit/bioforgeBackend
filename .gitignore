@@ -8,9 +8,10 @@ node_modules/
 dist/
 .env
 nohup.out
-public/tempUploads
-public/category
-public/weekDailyImage
+# public/tempUploads
+# public/profile
+# public/banner
+# public/linkLogo
 logs
 package-lock.json
 # Compiled Java class files

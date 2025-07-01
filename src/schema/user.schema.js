@@ -31,16 +31,7 @@ const userSchema = new mongoose.Schema({
         enum: ["active", "inactive"],
         default: "active"
     },
-    links: [{
-        linkId:{
-            type:mongoose.Schema.Types.ObjectId,
-            ref:'links'
-        },
-        is_index: {
-            type: Number,
-            default: 0
-        },
-    }],
+   
     theme: {
         themeType: {
             type: String,

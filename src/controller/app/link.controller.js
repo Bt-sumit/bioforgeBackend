@@ -7,13 +7,16 @@
     const addLinksValidation = require('../../validation/app/addlink.validation')
     class linksController {
 
-        add = async (req, res) => {
-            try {
-                const result = await linkService.add(req);
-                return responseHelper.success(res, "Link added successfully", result, statusCodes.OK);
+        add = async (request, response) => {
+            try { 
+            // const { error } = await addLinksValidation.add(request.body,);
+            // const validationError = responseHelper.validatIonError(response, error);
+            // if (validationError) return;
+                const result = await linkService.add(request);
+                return responseHelper.success(response, "Link added successfully", result, statusCodes.OK);
             } catch (error) {
                 console.error("Add Link Error:", error);
-                return responseHelper.error(res, error.message, statusCodes.INTERNAL_SERVER_ERROR);
+                return responseHelper.error(response, error.message, statusCodes.INTERNAL_SERVER_ERROR);
             }
         };
         update = async (request, response) => {
@@ -55,7 +58,20 @@
                 console.log(error);
                 return responseHelper.error(response, error.message, statusCodes.INTERNAL_SERVER_ERROR);
             }
-        }       
+        }   
+        updateIndex = async (request, response) => {
+            try {
+                // const linkData = await linkModel.findOne({_id:request?.body?._id,is_deleted:'0'});
+                // if(!linkData){
+                //     return responseHelper.Forbidden(response, `link not found`, null, statusCodes.OK)
+                // }
+                const data = await linkService.updateIndex(request);
+                return responseHelper.success(response, `link index updated successfully`, null, statusCodes.OK)
+            } catch (error) {
+                console.log(error);
+                return responseHelper.error(response, error.message, statusCodes.INTERNAL_SERVER_ERROR);
+            }
+        }
     }
 
     module.exports = new linksController

@@ -14,7 +14,7 @@ class userController {
             if (await userModel.findOne({ email: new RegExp(`^${request.body.email}$`, 'i'), is_deleted: "0" })) {
                 return responseHelper.Forbidden(response, "Email already exists", null, statusCodes.OK);
             }
-            await authService.register(request)
+            await userService.add(request)
             return responseHelper.success(response, `User create successfully`, null, statusCodes.OK);
 
         } catch (error) {
@@ -57,10 +57,7 @@ class userController {
     }
     delete = async (request, response) => {
         try {
-            const objectId = responseHelper.mongooseObjectIdError(
-                request?.query?._id,
-                response,
-                "_id"
+            const objectId = responseHelper.mongooseObjectIdError(request?.query?._id, response, "_id"
             );
             if (objectId) return;
             const userInfo = await userModel.findOne({ _id: new mongoose.Types.ObjectId(request?.query?._id) })
@@ -80,10 +77,7 @@ class userController {
     }
     status = async (request, response) => {
         try {
-            const objectId = responseHelper.mongooseObjectIdError(
-                request?.query?._id,
-                response,
-                "_id"
+            const objectId = responseHelper.mongooseObjectIdError(request?.query?._id, response,"_id"
             );
             if (objectId) return;
             const userInfo = await userModel.findOne({ _id: new mongoose.Types.ObjectId(request?.query?._id) })

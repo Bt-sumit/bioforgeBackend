@@ -3,7 +3,6 @@ const express = require('express');
 const path = require("path")
 const cors = require("cors")
 const fileUpload = require("express-fileupload");
-const onlyJsonMiddleware = require("./middleware/onlyJsonMiddleware ")
 const userRouter = require("./routes/app/user.routes")
 const adminRouter = require("./routes/admin/admin.routes")
 const imageRouter = require("./routes/upload/upload.route")
@@ -17,13 +16,13 @@ app.use(cors({
   credentials: true               
 }));
 app.use("/images", express.static(path.join(__dirname, "../public/profile")));
+app.use("/images", express.static(path.join(__dirname, "../public/banner")));
 app.use("/images", express.static(path.join(__dirname, "../public/linkLogo")));
 app.use("/images", express.static(path.join(__dirname, "../public/tempUploads")));
 app.use("/images", express.static(path.join(__dirname, "../public/default")));
 app.use(express.json({ limit: "50mb" }));
 app.use(express.urlencoded({ extended: true, limit: "50mb" }));
 app.use(fileUpload())
-app.use(onlyJsonMiddleware);
 
 app.use("/api/v1", userRouter);
 // admin

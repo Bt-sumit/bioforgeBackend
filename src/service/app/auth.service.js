@@ -1,22 +1,23 @@
-const helper = require("../../helper/helper")
-const userModel = require("../../model/user.model")
-const otpModel = require("../../model/otp.model")
+const helper = require("../../helper/helper");
+const userModel = require("../../model/user.model");
+const otpModel = require("../../model/otp.model");
 const sendEmail = require("../../helper/sendVerificationEmail");
 const emailTemplateImage = require("../../config/template");
 const fs = require("fs");
 const path = require("path");
 const mongoose = require("mongoose");
+const { type } = require("os");
 const authService = {}
 authService.register = async (request) => {
     const hashpassword = await helper.createPassword(request.body.password)
     request.body.password = hashpassword
-    if (request.body.profile_img) {
-        request.body.profile_img = await helper.moveFileFromFolder(request.body.profile_img, "profile");
-    }
+    // if (request.body.profile_img) {
+    //     request.body.profile_img = await helper.moveFileFromFolder(request.body.profile_img, "profile");
+    // }
     const data = await userModel.create(request.body)
     // authService.sendOtp(data, "verify")
     return data
-}
+};
 authService.login = async (data) => {
     const user = data.toObject();
     user.token = await helper.generateTokken(user);
@@ -151,37 +152,87 @@ authService.sendOtp = async (data, type) => {
         otp: opt
     })
     return otpData
-}
+};
 authService.forgetPassword = async (request) => {
     const hashpassword = await helper.createPassword(request.body.password)
     await userModel.findByIdAndUpdate({ _id: request.body.userId }, { password: hashpassword })
-}
+};
 authService.changePassword = async (request) => {
     const hashpassword = await helper.createPassword(request.body.newPassword)
     await userModel.findByIdAndUpdate({ _id: request?.auth?._id }, { password: hashpassword })
-}
+};
 authService.accountDelete = async (request) => {
-    await userModel.findByIdAndUpdate({ _id: request?.auth?._id }, { is_deleted: "1" })
-}
-authService.updateprofile = async (request) => {
-    const imageData = await userModel.findOne({ _id: request?.body?._id });
-    const oldImage = imageData.profile_img || "";
-    const newImage = request.body.profile_img || "";
-    if (oldImage && oldImage !== newImage) {
-        const imagePath = path.join("public/profile/", oldImage);
-        if (fs.existsSync(imagePath)) {
-            fs.unlink(imagePath, (err) => {
-                if (err) {
-                    console.error(`Failed to delete image: ${err.message}`);
-                } else {
-                    console.log(`Deleted image: ${oldImage}`);
-                }
-            });
+    const userId = request?.auth?._id;
+    const user = await userModel.findById(userId);
+    if (user) {
+        if (user.profile_img) {
+            const profileImgPath = path.join("public", "profile", user.profile_img);
+            if (fs.existsSync(profileImgPath)) {
+                fs.unlink(profileImgPath, (err) => {
+                    if (err) {
+                        console.error(`Failed to delete profile image: ${err.message}`);
+                    }
+                });
+            }
+        }
+        if (user.banner_img) {
+            const bannerImgPath = path.join("public", "banner", user.banner_img);
+            if (fs.existsSync(bannerImgPath)) {
+                fs.unlink(bannerImgPath, (err) => {
+                    if (err) {
+                        console.error(`Failed to delete banner image: ${err.message}`);
+                    }
+                });
+            }
         }
     }
-    if (newImage && oldImage !== newImage) {
-        await helper.moveFileFromFolder(newImage, "profile");
+    await userModel.findByIdAndUpdate({ _id: userId }, { is_deleted: "1" });
+};
+authService.updateprofile = async (request) => {
+    const userData = await userModel.findOne({ _id: request?.body?._id });
+    const oldProfileImg = userData.profile_img || "";
+    const newProfileImg = request.body.profile_img || "";
+    const oldBannerImg = userData.banner_img || "";
+    const newBannerImg = request.body.banner_img || "";
+    if (newProfileImg) {
+        const tempProfilePath = path.join("public", "tempUploads", newProfileImg);
+        if (fs.existsSync(tempProfilePath)) {
+            await helper.moveFileFromFolder(newProfileImg, "profile");
+            if (oldProfileImg && oldProfileImg !== newProfileImg) {
+                const oldProfilePath = path.join("public", "profile", oldProfileImg);
+                if (fs.existsSync(oldProfilePath)) {
+                    fs.unlink(oldProfilePath, (err) => {
+                        if (err) {
+                            console.error(`Failed to delete old profile image: ${err.message}`);
+                        } else {
+                            console.log(`Deleted old profile image: ${oldProfileImg}`);
+                        }
+                    });
+                }
+            }
+            request.body.profile_img = newProfileImg;
+        }
     }
+    if (newBannerImg) {
+        const tempBannerPath = path.join("public", "tempUploads", newBannerImg);
+        if (fs.existsSync(tempBannerPath)) {
+            await helper.moveFileFromFolder(newBannerImg, "banner");
+            if (oldBannerImg && oldBannerImg !== newBannerImg) {
+                const oldBannerPath = path.join("public", "banner", oldBannerImg);
+                if (fs.existsSync(oldBannerPath)) {
+                    fs.unlink(oldBannerPath, (err) => {
+                        if (err) {
+                            console.error(`Failed to delete old banner image: ${err.message}`);
+                        } else {
+                            console.log(`Deleted old banner image: ${oldBannerImg}`);
+                        }
+                    });
+                }
+            }
+            request.body.banner_img = newBannerImg;
+        }
+    }
+
     await userModel.findByIdAndUpdate(
         { _id: new mongoose.Types.ObjectId(request?.body?._id) },
         request.body
@@ -198,73 +249,60 @@ authService.getAll = async (request) => {
                 is_deleted: '0'
             }
         },
-        {
-            $unwind: {
-                path: "$links",
-                preserveNullAndEmptyArrays: true
-            }
-        },
-        {
+        
+       {
             $lookup: {
                 from: "links",
-                localField: "links.linkId",
-                foreignField: "_id",
-                as: "linkDetails"
-            }
-        },
-        {
-            $unwind: {
-                path: "$linkDetails",
-                preserveNullAndEmptyArrays: true
-            }
-        },
-        {
-            $match: {
-                "linkDetails.status": "active"
-            }
-        },
-        {
-            $addFields: {
-                "links.linkInfo": {
-                    linkTitle: "$linkDetails.linkTitle",
-                    linkUrl: "$linkDetails.linkUrl",
-                    linkLogo: "$linkDetails.linkLogo",
-                    // type:"$linkDetails.type"
-                }
-            }
-        },
-        {
-            $sort: {
-                "links.is_index": 1
-            }
-        },
-        {
-            $group: {
-                _id: "$_id",
-                username: { $first: "$username" },
-                email: { $first: "$email" },
-                profile_img: { $first: "$profile_img" },
-                banner_img: { $first: "$banner_img" },
-                links: {
-                    $push: {
-                        linkId: "$links.linkId",
-                        is_index: "$links.is_index"
+                localField: "_id",
+                foreignField: "userId",
+                as: "links",
+                pipeline:[
+                    {
+                        $match:{
+                            status:'active',
+                            is_deleted:'0'
+                        }
+                    },
+                    {
+                        $addFields: {
+                            sort_index: {
+                                $ifNull: ["$is_index", 999999]
+                            }
+                        }
+                    },
+                    {
+                        $sort: {
+                            sort_index: 1 ,
+                             type: -1,
+                        }
+                    },
+                    {
+                        $project:{
+                            _id:1,
+                            linkTitle:1,
+                            linkUrl:1,
+                            linkLogo:1,
+                            type:1,
+                            status:1,
+                            is_index:1
+                        }
                     }
-                },
-                linkInfo: { $push: "$links.linkInfo" }
+                ]
             }
         },
         {
-            $project: {
-                _id: 0,
-                username: 1,
-                email: 1,
-                profile_img: 1,
+            $project:{
+                _id:1,
+                username:1,
+                email:1,
+                bio:1,
+                profile_img:1,
                 banner_img:1,
-                links: 1,
-                linkInfo: 1
+                links:1,
+                
             }
         }
+
     ]);
 };
 authService.getTokenAll = async (request) => {
@@ -296,7 +334,7 @@ authService.getTokenAll = async (request) => {
             }
         }
     ])
-}
+};
 authService.updateTheme = async (request) => {
     const { userId, themeType, fontFamily, is_colorImage } = request.body;
     if (!userId) {

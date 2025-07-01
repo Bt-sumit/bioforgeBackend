@@ -2,6 +2,14 @@ const { default: mongoose } = require("mongoose")
 const helper = require("../../helper/helper")
 const userModel = require("../../model/user.model")
 const userService = {}
+
+userService.add = async (request) =>{
+     const hashpassword = await helper.createPassword(request.body.password)
+        request.body.password = hashpassword
+        const data = await userModel.create(request.body)
+        // authService.sendOtp(data, "verify")
+        return data
+}
 userService.update = async (request) => {
     if(request?.body?.password){
         const hashpassword = await helper.createPassword(request.body.password)

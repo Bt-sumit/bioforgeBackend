@@ -169,10 +169,19 @@ class authController {
     }
     updateProfile = async (request, response) => {
         try {
+        // const userId = String(request.auth._id);
+        //     console.log("===user",userId)
+
             const userData = await userModel.findOne({ _id: request?.body?._id, is_deleted: '0' });
+            //  console.log("====",userData._id )
+            // if(userData && String(userData.userId) === String(userId)){
+               
+            //     return responseHelper.Forbidden(response, `you are not authorize to update this profile `,null,statusCodes.OK)
+            // }
             if (!userData) {
                 return responseHelper.Forbidden(response, `user not found`, null, statusCodes.OK)
             }
+            
             const data = await authService.updateprofile(request);
             return responseHelper.success(response, `profile updated successfully`, data, statusCodes.OK)
         } catch (error) {

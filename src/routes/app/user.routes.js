@@ -20,6 +20,7 @@ userRouter.post('/logout', authController.logout);
 userRouter.post('/add-links', middleWare,linksController.add);
 userRouter.post("/link-update",middleWare, linksController.update);
 userRouter.get("/link-updateStatus",middleWare, linksController.updateStatus);
+userRouter.post("/update-index",middleWare, linksController.updateIndex);
 userRouter.post("/link-delete",middleWare, linksController.delete);
 userRouter.get("/get-links",middleWare, linksController.getAll);
 
